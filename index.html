@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Каталог товаров</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #f5f0e8;
+      --dark: #1a1612;
+      --accent: #b8860b;
+      --accent-light: #d4a843;
+      --muted: #7a7060;
+      --border: #e0d8c8;
+      --white: #ffffff;
+      --card-bg: #fdfaf4;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ─── LOADER ─── */
+    #loader {
+      position: fixed; inset: 0; background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.5s;
+    }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+    .loader-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem; font-weight: 300; color: var(--accent);
+      letter-spacing: 0.2em;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(245,240,232,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--dark); text-decoration: none;
+      letter-spacing: 0.05em;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .lang-switcher {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .lang-btn {
+      background: none; border: 1px solid var(--border);
+      padding: 4px 12px; border-radius: 20px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.75rem;
+      font-weight: 500; cursor: pointer; color: var(--muted);
+      transition: all 0.2s; letter-spacing: 0.05em;
+    }
+    .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .lang-btn.active {
+      background: var(--accent); border-color: var(--accent);
+      color: var(--white);
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative; overflow: hidden;
+      min-height: 520px;
+      display: flex; align-items: flex-end;
+    }
+    .hero-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(26,22,18,0.85) 0%, rgba(26,22,18,0.2) 60%, transparent 100%);
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 3rem 3rem 3.5rem;
+      max-width: 700px;
+      animation: fadeUp 0.8s ease both;
+    }
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.7rem; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent-light);
+      border: 1px solid var(--accent-light);
+      padding: 4px 14px; border-radius: 20px;
+      margin-bottom: 1rem;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 600; line-height: 1.1;
+      color: var(--white); margin-bottom: 1rem;
+    }
+    .hero-desc {
+      font-size: 1rem; line-height: 1.7;
+      color: rgba(255,255,255,0.75);
+      max-width: 500px;
+    }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+
+    /* ─── CATEGORY NAV ─── */
+    .cat-nav {
+      padding: 1.5rem 2rem;
+      display: flex; gap: 10px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+    }
+    .cat-nav-btn {
+      background: none; border: 1px solid var(--border);
+      padding: 6px 18px; border-radius: 20px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+      cursor: pointer; color: var(--muted);
+      transition: all 0.2s;
+    }
+    .cat-nav-btn:hover,
+    .cat-nav-btn.active {
+      background: var(--dark); border-color: var(--dark);
+      color: var(--white);
+    }
+
+    /* ─── SECTIONS ─── */
+    .section {
+      padding: 4rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section:last-child { border-bottom: none; }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-bottom: 3rem;
+    }
+    .section-header.reverse { direction: rtl; }
+    .section-header.reverse > * { direction: ltr; }
+
+    .section-img-wrap {
+      position: relative; border-radius: 4px; overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+    .section-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+    .section-img-wrap:hover .section-img { transform: scale(1.03); }
+
+    .section-text {}
+    .section-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 5rem; font-weight: 700;
+      color: var(--border); line-height: 1;
+      margin-bottom: -1rem;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.4rem; font-weight: 600;
+      color: var(--dark); margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .section-desc {
+      font-size: 0.95rem; line-height: 1.8;
+      color: var(--muted);
+    }
+    .section-count {
+      display: inline-block;
+      margin-top: 1.5rem;
+      font-size: 0.75rem; font-weight: 500;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--accent); border-bottom: 1px solid var(--accent);
+      padding-bottom: 2px;
+    }
+
+    /* ─── PRODUCT GRID ─── */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px; overflow: hidden;
+      transition: box-shadow 0.3s, transform 0.3s;
+      cursor: default;
+    }
+    .product-card:hover {
+      box-shadow: 0 8px 32px rgba(26,22,18,0.1);
+      transform: translateY(-4px);
+    }
+    .product-img-wrap {
+      aspect-ratio: 1/1; overflow: hidden;
+      background: var(--border);
+    }
+    .product-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s;
+    }
+    .product-card:hover .product-img { transform: scale(1.06); }
+    .product-img-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #ede8df, #d8d0c0);
+    }
+    .product-info { padding: 1rem; text-align: center;}
+    .product-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem; font-weight: 600;
+      color: var(--dark); margin-bottom: 0.3rem;
+      line-height: 1.3;
+    }
+    .product-price {
+      font-size: 0.9rem; font-weight: 500;
+      color: var(--accent);
+    }
+    .product-desc {
+      font-size: 0.78rem; color: var(--muted);
+      margin-top: 0.4rem; line-height: 1.5;
+    }
+
+    /* ─── ERROR / NOTICE ─── */
+    .notice {
+      text-align: center; padding: 3rem 2rem;
+    }
+    .notice-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .notice-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem;
+    }
+    .notice-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
+    .notice-text code {
+      background: var(--border); padding: 2px 8px;
+      border-radius: 4px; font-size: 0.82rem;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--dark); color: rgba(255,255,255,0.4);
+      text-align: center; padding: 2rem;
+      font-size: 0.8rem; letter-spacing: 0.05em;
+    }
+    footer strong { color: rgba(255,255,255,0.7); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .section-header,
+      .section-header.reverse { grid-template-columns: 1fr; direction: ltr; }
+      .hero-content { padding: 2rem 1.5rem 2.5rem; }
+      nav { padding: 0 1rem; }
+      .section { padding: 3rem 1rem; }
+      .cat-nav { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loader"><span class="loader-text">Загрузка...</span></div>
+
+<!-- NAVBAR -->
+<nav>
+  <a class="nav-logo" href="#"><span id="nav-title">Каталог</span></a>
+  <div class="lang-switcher" id="lang-switcher"></div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main"></main>
+
+<!-- FOOTER -->
+<footer>
+  <strong id="footer-brand">Каталог товаров</strong> &mdash; <span id="footer-copy">Все права защищены</span>
+</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  КОНФИГУРАЦИЯ — ИЗМЕНИТЕ ЭТИ ЗНАЧЕНИЯ
+// ════════════════════════════════════════════════════════════════
+const CONFIG = {
+  // ID вашей Google Таблицы (из URL: docs.google.com/spreadsheets/d/ВОТ_ЭТОТ_ID/...)
+  SHEET_ID: "1YK1wFH7qPgbCOTT76lEQLrxIpni6-3GnwT7AFalfJTQ",
+
+  // Имена листов в таблице
+  SHEETS: {
+    settings: "Settings",   // Лист с настройками сайта и баннерами
+    products: "Products",   // Лист с товарами
+  },
+
+  // Языки по умолчанию и доступные языки
+  DEFAULT_LANG: "ru",
+  LANGUAGES: ["ru", "en", "de", "uk"],  // добавьте сюда нужные
+
+  // Названия языков для кнопок
+  LANG_LABELS: { ru: "RU", en: "EN", de: "DE", uk: "УК", fr: "FR", es: "ES", zh: "中文" },
+};
+// ════════════════════════════════════════════════════════════════
+
+// ─── DEMO DATA (используется если Sheet ID не задан) ────────────
+const DEMO_DATA = {
+  settings: [
+    {
+      key: "site_name",
+      ru: "Наш Каталог", en: "Our Catalog", de: "Unser Katalog", uk: "Наш Каталог"
+    },
+    {
+      key: "banner_1_title",
+      ru: "Коллекция 2025", en: "Collection 2025", de: "Kollektion 2025", uk: "Колекція 2025"
+    },
+    {
+      key: "banner_1_desc",
+      ru: "Откройте для себя наши лучшие товары этого сезона — качество, которому доверяют тысячи покупателей.",
+      en: "Discover our best products of the season — quality trusted by thousands of customers.",
+      de: "Entdecken Sie unsere besten Produkte der Saison — Qualität, der Tausende vertrauen.",
+      uk: "Відкрийте для себе наші найкращі товари сезону — якість, якій довіряють тисячі покупців."
+    },
+    {
+      key: "banner_1_image",
+      ru: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80",
+      en: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80",
+      de: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80",
+      uk: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80"
+    },
+    {
+      key: "banner_1_tag",
+      ru: "Новая коллекция", en: "New collection", de: "Neue Kollektion", uk: "Нова колекція"
+    },
+  ],
+  products: [
+    { category_id: "cat1", category_name_ru: "Верхняя одежда", category_name_en: "Outerwear", category_name_de: "Oberbekleidung", category_name_uk: "Верхній одяг",
+      category_image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80",
+      category_desc_ru: "Стильные и тёплые решения для любой погоды.", category_desc_en: "Stylish and warm solutions for any weather.", category_desc_de: "Stilvolle und warme Lösungen für jedes Wetter.", category_desc_uk: "Стильні та теплі рішення для будь-якої погоди.",
+      name_ru: "Пальто осеннее", name_en: "Autumn Coat", name_de: "Herbstmantel", name_uk: "Осіннє пальто",
+      price: "4 900 грн", image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&q=80",
+      desc_ru: "Классическое пальто из шерсти", desc_en: "Classic wool coat", desc_de: "Klassischer Wollmantel", desc_uk: "Класичне вовняне пальто" },
+    { category_id: "cat1",
+      name_ru: "Куртка кожаная", name_en: "Leather Jacket", name_de: "Lederjacke", name_uk: "Шкіряна куртка",
+      price: "6 200 грн", image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80",
+      desc_ru: "Натуральная кожа, классика жанра", desc_en: "Genuine leather classic", desc_de: "Echtes Leder, ein Klassiker", desc_uk: "Натуральна шкіра, класика жанру" },
+    { category_id: "cat1",
+      name_ru: "Пуховик зимний", name_en: "Winter Down Jacket", name_de: "Winterdaunenjacke", name_uk: "Зимовий пуховик",
+      price: "5 100 грн", image: "https://images.unsplash.com/photo-1611911813383-67769b37a149?w=400&q=80",
+      desc_ru: "Тёплый пуховик на холодные дни", desc_en: "Warm jacket for cold days", desc_de: "Warme Jacke für kalte Tage", desc_uk: "Теплий пуховик на холодні дні" },
+    { category_id: "cat1",
+      name_ru: "Тренч бежевый", name_en: "Beige Trench", name_de: "Beiger Trenchcoat", name_uk: "Бежевий тренч",
+      price: "3 800 грн", image: "", desc_ru: "Лёгкий тренч для межсезонья", desc_en: "Light trench for mid-season", desc_de: "Leichter Trench für die Zwischensaison", desc_uk: "Легкий тренч для міжсезоння" },
+    { category_id: "cat1",
+      name_ru: "Ветровка спортивная", name_en: "Sport Windbreaker", name_de: "Sport-Windjacke", name_uk: "Спортивна вітровка",
+      price: "2 400 грн", image: "", desc_ru: "", desc_en: "", desc_de: "", desc_uk: "" },
+
+    // Категория 2
+    { category_id: "cat2", category_name_ru: "Аксессуары", category_name_en: "Accessories", category_name_de: "Accessoires", category_name_uk: "Аксесуари",
+      category_image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=80",
+      category_desc_ru: "Детали, которые завершают образ.", category_desc_en: "Details that complete your look.", category_desc_de: "Details, die Ihren Look vervollständigen.", category_desc_uk: "Деталі, які завершують образ.",
+      name_ru: "Сумка кожаная", name_en: "Leather Bag", name_de: "Ledertasche", name_uk: "Шкіряна сумка",
+      price: "3 200 грн", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80",
+      desc_ru: "Вместительная сумка из натуральной кожи", desc_en: "Spacious genuine leather bag", desc_de: "Geräumige echte Ledertasche", desc_uk: "Місткий сумка зі шкіри" },
+    { category_id: "cat2",
+      name_ru: "Ремень классический", name_en: "Classic Belt", name_de: "Klassischer Gürtel", name_uk: "Класичний ремінь",
+      price: "890 грн", image: "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=400&q=80",
+      desc_ru: "Ремень из натуральной кожи", desc_en: "Genuine leather belt", desc_de: "Echter Ledergürtel", desc_uk: "Ремінь зі шкіри" },
+    { category_id: "cat2",
+      name_ru: "Шарф шерстяной", name_en: "Wool Scarf", name_de: "Wollschal", name_uk: "Вовняний шарф",
+      price: "1 200 грн", image: "", desc_ru: "Мягкий шерстяной шарф", desc_en: "Soft wool scarf", desc_de: "Weicher Wollschal", desc_uk: "М'який вовняний шарф" },
+    { category_id: "cat2",
+      name_ru: "Перчатки кожаные", name_en: "Leather Gloves", name_de: "Lederhandschuhe", name_uk: "Шкіряні рукавички",
+      price: "1 500 грн", image: "", desc_ru: "", desc_en: "", desc_de: "", desc_uk: "" },
+  ]
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let currentLang = CONFIG.DEFAULT_LANG;
+let catalog = { settings: {}, categories: [] };
+
+// ─── HELPERS ─────────────────────────────────────────────────────
+const t = (obj, key) => obj[`${key}_${currentLang}`] || obj[`${key}_en`] || obj[`${key}_ru`] || "";
+const setting = (key) => catalog.settings[key] ? (catalog.settings[key][currentLang] || catalog.settings[key]["en"] || "") : "";
+const apiUrl = (sheet) =>
+  `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}`;
+
+// ─── FETCH FROM GOOGLE SHEETS ────────────────────────────────────
+async function fetchSheet(sheetName) {
+  const res = await fetch(apiUrl(sheetName));
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47).slice(0, -2));
+  const cols = json.table.cols.map(c => c.label);
+  return json.table.rows.map(row => {
+    const obj = {};
+    row.c.forEach((cell, i) => { obj[cols[i]] = cell ? cell.v : ""; });
+    return obj;
+  });
+}
+
+// ─── PARSE DATA ───────────────────────────────────────────────────
+function parseData(settingsRows, productRows) {
+  // Settings → dict
+  const settings = {};
+  settingsRows.forEach(row => { if (row.key) settings[row.key] = row; });
+
+  // Products → group by category
+  const catMap = new Map();
+  productRows.forEach(row => {
+    const cid = row.category_id;
+    if (!catMap.has(cid)) {
+      catMap.set(cid, {
+        id: cid,
+        name: { ru: row.category_name_ru, en: row.category_name_en, de: row.category_name_de, uk: row.category_name_uk },
+        image: row.category_image,
+        desc: { ru: row.category_desc_ru, en: row.category_desc_en, de: row.category_desc_de, uk: row.category_desc_uk },
+        products: []
+      });
+    }
+    catMap.get(cid).products.push({
+      name: { ru: row.name_ru, en: row.name_en, de: row.name_de, uk: row.name_uk },
+      price: row.price,
+      image: row.image,
+      desc: { ru: row.desc_ru, en: row.desc_en, de: row.desc_de, uk: row.desc_uk },
+    });
+  });
+
+  return { settings, categories: [...catMap.values()] };
+}
+
+// ─── PARSE DEMO DATA ──────────────────────────────────────────────
+function parseDemoData() {
+  const settings = {};
+  DEMO_DATA.settings.forEach(row => { settings[row.key] = row; });
+
+  const catMap = new Map();
+  DEMO_DATA.products.forEach(row => {
+    const cid = row.category_id;
+    if (!catMap.has(cid)) {
+      catMap.set(cid, {
+        id: cid,
+        name: { ru: row.category_name_ru, en: row.category_name_en, de: row.category_name_de, uk: row.category_name_uk },
+        image: row.category_image,
+        desc: { ru: row.category_desc_ru, en: row.category_desc_en, de: row.category_desc_de, uk: row.category_desc_uk },
+        products: []
+      });
+    }
+    catMap.get(cid).products.push({
+      name: { ru: row.name_ru, en: row.name_en, de: row.name_de, uk: row.name_uk },
+      price: row.price,
+      image: row.image,
+      desc: { ru: row.desc_ru, en: row.desc_en, de: row.desc_de, uk: row.desc_uk },
+    });
+  });
+
+  return { settings, categories: [...catMap.values()] };
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────
+function render() {
+  const siteName = setting("site_name") || "Каталог";
+  document.title = siteName;
+  document.getElementById("nav-title").textContent = siteName;
+  document.getElementById("footer-brand").textContent = siteName;
+
+  // Lang switcher
+  const ls = document.getElementById("lang-switcher");
+  ls.innerHTML = CONFIG.LANGUAGES.map(l =>
+    `<button class="lang-btn${l === currentLang ? " active" : ""}" onclick="switchLang('${l}')">${CONFIG.LANG_LABELS[l] || l.toUpperCase()}</button>`
+  ).join("");
+
+  // Hero
+  const bannerTitle = setting("banner_1_title");
+  const bannerDesc = setting("banner_1_desc");
+  const bannerImg = setting("banner_1_image");
+  const bannerTag = setting("banner_1_tag");
+
+  // Category nav
+  const catNavHtml = catalog.categories.map(cat =>
+    `<button class="cat-nav-btn" onclick="document.getElementById('cat-${cat.id}').scrollIntoView({behavior:'smooth'})">${cat.name[currentLang] || cat.name.en}</button>`
+  ).join("");
+
+  // Sections
+  const sectionsHtml = catalog.categories.map((cat, idx) => {
+    const isReverse = idx % 2 === 1;
+    const catName = cat.name[currentLang] || cat.name.en || "";
+    const catDesc = cat.desc[currentLang] || cat.desc.en || "";
+
+    const headerHtml = `
+      <div class="section-header${isReverse ? " reverse" : ""}">
+        <div class="section-img-wrap">
+          ${cat.image
+            ? `<img class="section-img" src="${cat.image}" alt="${catName}" loading="lazy" />`
+            : `<div class="section-img-placeholder">📦</div>`}
+        </div>
+        <div class="section-text">
+          <div class="section-number">0${idx + 1}</div>
+          <h2 class="section-title">${catName}</h2>
+          ${catDesc ? `<p class="section-desc">${catDesc}</p>` : ""}
+          <span class="section-count">${cat.products.length} ${productWord(cat.products.length)}</span>
+        </div>
+      </div>`;
+
+    const productsHtml = cat.products.map(p => {
+      const name = p.name[currentLang] || p.name.en || "";
+      const desc = p.desc[currentLang] || p.desc.en || "";
+      return `<div class="product-card">
+        <div class="product-img-wrap">
+          ${p.image
+            ? `<img class="product-img" src="${p.image}" alt="${name}" loading="lazy" />`
+            : `<div class="product-img-placeholder">🛍️</div>`}
+        </div>
+        <div class="product-info">
+          <div class="product-name">${name}</div>
+          ${desc ? `<div class="product-desc">${desc}</div>` : ""}
+          ${p.price ? `<div class="product-price">${p.price}</div>` : ""}
+
+        </div>
+      </div>`;
+    }).join("");
+
+    return `<section class="section" id="cat-${cat.id}">
+      ${headerHtml}
+      <div class="product-grid">${productsHtml}</div>
+    </section>`;
+  }).join("");
+
+  document.getElementById("main").innerHTML = `
+    <section class="hero">
+      ${bannerImg ? `<img class="hero-img" src="${bannerImg}" alt="banner" />` : ""}
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        ${bannerTag ? `<span class="hero-tag">${bannerTag}</span>` : ""}
+        <h1 class="hero-title">${bannerTitle}</h1>
+        ${bannerDesc ? `<p class="hero-desc">${bannerDesc}</p>` : ""}
+      </div>
+    </section>
+    <div class="cat-nav">${catNavHtml}</div>
+    ${sectionsHtml}
+  `;
+}
+
+function productWord(n) {
+  // Multilingual item count word
+  const words = { ru: ["товар","товара","товаров"], en: ["item","items","items"], de: ["Artikel","Artikel","Artikel"], uk: ["товар","товари","товарів"] };
+  const w = words[currentLang] || words.en;
+  const mod10 = n % 10, mod100 = n % 100;
+  if (currentLang === "ru" || currentLang === "uk") {
+    if (mod100 >= 11 && mod100 <= 14) return w[2];
+    if (mod10 === 1) return w[0];
+    if (mod10 >= 2 && mod10 <= 4) return w[1];
+    return w[2];
+  }
+  return n === 1 ? w[0] : w[1];
+}
+
+function switchLang(lang) {
+  currentLang = lang;
+  render();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  const isDemo = CONFIG.SHEET_ID === "ВСТАВЬТЕ_ID_ТАБЛИЦЫ_СЮДА" || !CONFIG.SHEET_ID;
+
+  if (isDemo) {
+    catalog = parseDemoData();
+  } else {
+    try {
+      const [settingsRows, productRows] = await Promise.all([
+        fetchSheet(CONFIG.SHEETS.settings),
+        fetchSheet(CONFIG.SHEETS.products),
+      ]);
+      catalog = parseData(settingsRows, productRows);
+    } catch (e) {
+      catalog = parseDemoData();
+      console.warn("Ошибка загрузки Google Sheets, используются демо-данные:", e);
+    }
+  }
+
+  render();
+  const loader = document.getElementById("loader");
+  loader.classList.add("hidden");
+  setTimeout(() => loader.remove(), 600);
+}
+
+init();
+</script>
+</body>
+</html>
