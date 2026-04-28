@@ -279,7 +279,7 @@
 </head>
 <body>
 
-<div id="loader"><span class="loader-text">Загрузка...</span></div>
+<div id="loader"><span class="loader-text">Loading...</span></div>
 
 <!-- NAVBAR -->
 <nav>
@@ -292,7 +292,7 @@
 
 <!-- FOOTER -->
 <footer>
-  <strong id="footer-brand">Каталог товаров</strong> &mdash; <span id="footer-copy">Все права защищены</span>
+  <strong id="footer-brand">Каталог товаров</strong> &mdash; <span id="footer-copy">© 2026 - All rights reserved</span>
 </footer>
 
 <script>
@@ -310,8 +310,8 @@ const CONFIG = {
   },
 
   // Языки по умолчанию и доступные языки
-  DEFAULT_LANG: "ru",
-  LANGUAGES: ["ru", "en", "de", "uk"],  // добавьте сюда нужные
+  DEFAULT_LANG: "en",
+  LANGUAGES: ["en", "de", "uk", "ru"],  // добавьте сюда нужные
 
   // Названия языков для кнопок
   LANG_LABELS: { ru: "RU", en: "EN", de: "DE", uk: "УК", fr: "FR", es: "ES", zh: "中文" },
@@ -401,6 +401,23 @@ const apiUrl = (sheet) =>
   `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}`;
 
 // ─── FETCH FROM GOOGLE SHEETS ────────────────────────────────────
+// Для Settings (заголовки в данных)
+async function fetchSheetManualHeaders(sheetName) {
+  const res = await fetch(apiUrl(sheetName));
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47).slice(0, -2));
+  const allRows = json.table.rows.map(row =>
+    row.c.map(cell => cell ? cell.v : "")
+  );
+  const headers = allRows[0];
+  return allRows.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => { if (h) obj[h] = row[i] || ""; });
+    return obj;
+  });
+}
+
+// Для Products (заголовки в label)
 async function fetchSheet(sheetName) {
   const res = await fetch(apiUrl(sheetName));
   const text = await res.text();
@@ -473,7 +490,7 @@ function parseDemoData() {
 
 // ─── RENDER ───────────────────────────────────────────────────────
 function render() {
-  const siteName = setting("site_name") || "Каталог";
+  const siteName = setting("site_name") || "Reforma";
   document.title = siteName;
   document.getElementById("nav-title").textContent = siteName;
   document.getElementById("footer-brand").textContent = siteName;
@@ -583,8 +600,8 @@ async function init() {
   } else {
     try {
       const [settingsRows, productRows] = await Promise.all([
-        fetchSheet(CONFIG.SHEETS.settings),
-        fetchSheet(CONFIG.SHEETS.products),
+      fetchSheetManualHeaders(CONFIG.SHEETS.settings),
+      fetchSheet(CONFIG.SHEETS.products),
       ]);
       catalog = parseData(settingsRows, productRows);
     } catch (e) {
