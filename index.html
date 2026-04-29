@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Каталог товаров</title>
+  <title>Reforma - Product Catalog</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
@@ -53,29 +53,70 @@
       padding: 0 2rem;
       display: flex; align-items: center; justify-content: space-between;
       height: 64px;
+      gap: 1rem;
     }
     .nav-logo {
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.5rem; font-weight: 700;
       color: var(--dark); text-decoration: none;
       letter-spacing: 0.05em;
+      flex-shrink: 0;
     }
     .nav-logo span { color: var(--accent); }
 
-    .lang-switcher {
-      display: flex; gap: 6px; align-items: center;
+    /* ─── LANGUAGE DROPDOWN ─── */
+    .lang-wrapper {
+      position: relative;
+      flex-shrink: 0;
     }
-    .lang-btn {
+    .lang-selected {
+      display: flex; align-items: center; gap: 6px;
       background: none; border: 1px solid var(--border);
-      padding: 4px 12px; border-radius: 20px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.75rem;
-      font-weight: 500; cursor: pointer; color: var(--muted);
+      padding: 5px 14px; border-radius: 20px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+      font-weight: 500; cursor: pointer; color: var(--dark);
       transition: all 0.2s; letter-spacing: 0.05em;
+      white-space: nowrap;
     }
-    .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .lang-btn.active {
-      background: var(--accent); border-color: var(--accent);
-      color: var(--white);
+    .lang-selected:hover { border-color: var(--accent); color: var(--accent); }
+    .lang-selected .arrow {
+      font-size: 0.6rem; transition: transform 0.2s;
+      margin-left: 2px;
+    }
+    .lang-wrapper.open .lang-selected { border-color: var(--accent); color: var(--accent); }
+    .lang-wrapper.open .arrow { transform: rotate(180deg); }
+
+    .lang-dropdown {
+      display: none;
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(26,22,18,0.12);
+      min-width: 180px;
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 200;
+    }
+    .lang-wrapper.open .lang-dropdown { display: block; }
+
+    .lang-dropdown::-webkit-scrollbar { width: 4px; }
+    .lang-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .lang-dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .lang-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px;
+      cursor: pointer;
+      font-size: 0.82rem; color: var(--dark);
+      transition: background 0.15s;
+    }
+    .lang-option:hover { background: var(--cream); }
+    .lang-option.active { color: var(--accent); font-weight: 500; }
+    .lang-option .flag { font-size: 1.1rem; }
+    .lang-option .code {
+      font-size: 0.7rem; color: var(--muted);
+      margin-left: auto;
     }
 
     /* ─── HERO ─── */
@@ -168,7 +209,6 @@
     }
     .section-img-wrap:hover .section-img { transform: scale(1.03); }
 
-    .section-text {}
     .section-number {
       font-family: 'Cormorant Garamond', serif;
       font-size: 5rem; font-weight: 700;
@@ -227,7 +267,7 @@
       font-size: 2.5rem;
       background: linear-gradient(135deg, #ede8df, #d8d0c0);
     }
-    .product-info { padding: 1rem; text-align: center;}
+    .product-info { padding: 1rem; text-align: center; }
     .product-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.05rem; font-weight: 600;
@@ -241,21 +281,6 @@
     .product-desc {
       font-size: 0.78rem; color: var(--muted);
       margin-top: 0.4rem; line-height: 1.5;
-    }
-
-    /* ─── ERROR / NOTICE ─── */
-    .notice {
-      text-align: center; padding: 3rem 2rem;
-    }
-    .notice-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .notice-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem;
-    }
-    .notice-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
-    .notice-text code {
-      background: var(--border); padding: 2px 8px;
-      border-radius: 4px; font-size: 0.82rem;
     }
 
     /* ─── FOOTER ─── */
@@ -283,8 +308,15 @@
 
 <!-- NAVBAR -->
 <nav>
-  <a class="nav-logo" href="#"><span id="nav-title">Каталог</span></a>
-  <div class="lang-switcher" id="lang-switcher"></div>
+  <a class="nav-logo" href="#"><span id="nav-title">Reforma</span></a>
+  <div class="lang-wrapper" id="lang-wrapper">
+    <button class="lang-selected" id="lang-selected" onclick="toggleLangDropdown()">
+      <span id="lang-flag">🇬🇧</span>
+      <span id="lang-label">English</span>
+      <span class="arrow">▼</span>
+    </button>
+    <div class="lang-dropdown" id="lang-dropdown"></div>
+  </div>
 </nav>
 
 <!-- MAIN CONTENT -->
@@ -292,116 +324,64 @@
 
 <!-- FOOTER -->
 <footer>
-  <strong id="footer-brand">Каталог товаров</strong> &mdash; <span id="footer-copy">© 2026 - All rights reserved</span>
+  <strong id="footer-brand">Reforma</strong> &mdash; <span id="footer-copy">© 2026 - All rights reserved</span>
 </footer>
 
 <script>
 // ════════════════════════════════════════════════════════════════
-//  КОНФИГУРАЦИЯ — ИЗМЕНИТЕ ЭТИ ЗНАЧЕНИЯ
+//  КОНФИГУРАЦИЯ
 // ════════════════════════════════════════════════════════════════
 const CONFIG = {
-  // ID вашей Google Таблицы (из URL: docs.google.com/spreadsheets/d/ВОТ_ЭТОТ_ID/...)
   SHEET_ID: "1YK1wFH7qPgbCOTT76lEQLrxIpni6-3GnwT7AFalfJTQ",
-
-  // Имена листов в таблице
   SHEETS: {
-    settings: "Settings",   // Лист с настройками сайта и баннерами
-    products: "Products",   // Лист с товарами
+    settings: "Settings",
+    products: "Products",
   },
-
-  // Языки по умолчанию и доступные языки
   DEFAULT_LANG: "en",
-  LANGUAGES: ["en", "de", "uk", "ru"],  // добавьте сюда нужные
 
-  // Названия языков для кнопок
-  LANG_LABELS: { ru: "RU", en: "EN", de: "DE", uk: "УК", fr: "FR", es: "ES", zh: "中文" },
+  // Все языки: код → { label, flag }
+  // Код языка должен совпадать с именем колонки в таблице (name_en, name_pl, и т.д.)
+  LANGUAGES: {
+    en: { label: "English",    flag: "🇬🇧" },
+    pl: { label: "Polish",     flag: "🇵🇱" },
+    uk: { label: "Ukrainian",  flag: "🇺🇦" },
+    fr: { label: "French",     flag: "🇫🇷" },
+    nl: { label: "Dutch",      flag: "🇳🇱" },
+    de: { label: "German",     flag: "🇩🇪" },
+    it: { label: "Italian",    flag: "🇮🇹" },
+    es: { label: "Spanish",    flag: "🇪🇸" },
+    pt: { label: "Portuguese", flag: "🇵🇹" },
+    el: { label: "Greek",      flag: "🇬🇷" },
+    cs: { label: "Czech",      flag: "🇨🇿" },
+    sk: { label: "Slovak",     flag: "🇸🇰" },
+    hu: { label: "Hungarian",  flag: "🇭🇺" },
+    ro: { label: "Romanian",   flag: "🇷🇴" },
+    bg: { label: "Bulgarian",  flag: "🇧🇬" },
+    hr: { label: "Croatian",   flag: "🇭🇷" },
+    sr: { label: "Serbian",    flag: "🇷🇸" },
+    sl: { label: "Slovenian",  flag: "🇸🇮" },
+    da: { label: "Danish",     flag: "🇩🇰" },
+    no: { label: "Norwegian",  flag: "🇳🇴" },
+    sv: { label: "Swedish",    flag: "🇸🇪" },
+    fi: { label: "Finnish",    flag: "🇫🇮" },
+    ru: { label: "Russian",    flag: "🇷🇺" },
+  },
 };
 // ════════════════════════════════════════════════════════════════
-
-// ─── DEMO DATA (используется если Sheet ID не задан) ────────────
-const DEMO_DATA = {
-  settings: [
-    {
-      key: "site_name",
-      ru: "Наш Каталог", en: "Our Catalog", de: "Unser Katalog", uk: "Наш Каталог"
-    },
-    {
-      key: "banner_1_title",
-      ru: "Коллекция 2025", en: "Collection 2025", de: "Kollektion 2025", uk: "Колекція 2025"
-    },
-    {
-      key: "banner_1_desc",
-      ru: "Откройте для себя наши лучшие товары этого сезона — качество, которому доверяют тысячи покупателей.",
-      en: "Discover our best products of the season — quality trusted by thousands of customers.",
-      de: "Entdecken Sie unsere besten Produkte der Saison — Qualität, der Tausende vertrauen.",
-      uk: "Відкрийте для себе наші найкращі товари сезону — якість, якій довіряють тисячі покупців."
-    },
-    {
-      key: "banner_1_image",
-      ru: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80",
-      en: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80",
-      de: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80",
-      uk: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80"
-    },
-    {
-      key: "banner_1_tag",
-      ru: "Новая коллекция", en: "New collection", de: "Neue Kollektion", uk: "Нова колекція"
-    },
-  ],
-  products: [
-    { category_id: "cat1", category_name_ru: "Верхняя одежда", category_name_en: "Outerwear", category_name_de: "Oberbekleidung", category_name_uk: "Верхній одяг",
-      category_image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80",
-      category_desc_ru: "Стильные и тёплые решения для любой погоды.", category_desc_en: "Stylish and warm solutions for any weather.", category_desc_de: "Stilvolle und warme Lösungen für jedes Wetter.", category_desc_uk: "Стильні та теплі рішення для будь-якої погоди.",
-      name_ru: "Пальто осеннее", name_en: "Autumn Coat", name_de: "Herbstmantel", name_uk: "Осіннє пальто",
-      price: "4 900 грн", image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&q=80",
-      desc_ru: "Классическое пальто из шерсти", desc_en: "Classic wool coat", desc_de: "Klassischer Wollmantel", desc_uk: "Класичне вовняне пальто" },
-    { category_id: "cat1",
-      name_ru: "Куртка кожаная", name_en: "Leather Jacket", name_de: "Lederjacke", name_uk: "Шкіряна куртка",
-      price: "6 200 грн", image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80",
-      desc_ru: "Натуральная кожа, классика жанра", desc_en: "Genuine leather classic", desc_de: "Echtes Leder, ein Klassiker", desc_uk: "Натуральна шкіра, класика жанру" },
-    { category_id: "cat1",
-      name_ru: "Пуховик зимний", name_en: "Winter Down Jacket", name_de: "Winterdaunenjacke", name_uk: "Зимовий пуховик",
-      price: "5 100 грн", image: "https://images.unsplash.com/photo-1611911813383-67769b37a149?w=400&q=80",
-      desc_ru: "Тёплый пуховик на холодные дни", desc_en: "Warm jacket for cold days", desc_de: "Warme Jacke für kalte Tage", desc_uk: "Теплий пуховик на холодні дні" },
-    { category_id: "cat1",
-      name_ru: "Тренч бежевый", name_en: "Beige Trench", name_de: "Beiger Trenchcoat", name_uk: "Бежевий тренч",
-      price: "3 800 грн", image: "", desc_ru: "Лёгкий тренч для межсезонья", desc_en: "Light trench for mid-season", desc_de: "Leichter Trench für die Zwischensaison", desc_uk: "Легкий тренч для міжсезоння" },
-    { category_id: "cat1",
-      name_ru: "Ветровка спортивная", name_en: "Sport Windbreaker", name_de: "Sport-Windjacke", name_uk: "Спортивна вітровка",
-      price: "2 400 грн", image: "", desc_ru: "", desc_en: "", desc_de: "", desc_uk: "" },
-
-    // Категория 2
-    { category_id: "cat2", category_name_ru: "Аксессуары", category_name_en: "Accessories", category_name_de: "Accessoires", category_name_uk: "Аксесуари",
-      category_image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=80",
-      category_desc_ru: "Детали, которые завершают образ.", category_desc_en: "Details that complete your look.", category_desc_de: "Details, die Ihren Look vervollständigen.", category_desc_uk: "Деталі, які завершують образ.",
-      name_ru: "Сумка кожаная", name_en: "Leather Bag", name_de: "Ledertasche", name_uk: "Шкіряна сумка",
-      price: "3 200 грн", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80",
-      desc_ru: "Вместительная сумка из натуральной кожи", desc_en: "Spacious genuine leather bag", desc_de: "Geräumige echte Ledertasche", desc_uk: "Місткий сумка зі шкіри" },
-    { category_id: "cat2",
-      name_ru: "Ремень классический", name_en: "Classic Belt", name_de: "Klassischer Gürtel", name_uk: "Класичний ремінь",
-      price: "890 грн", image: "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=400&q=80",
-      desc_ru: "Ремень из натуральной кожи", desc_en: "Genuine leather belt", desc_de: "Echter Ledergürtel", desc_uk: "Ремінь зі шкіри" },
-    { category_id: "cat2",
-      name_ru: "Шарф шерстяной", name_en: "Wool Scarf", name_de: "Wollschal", name_uk: "Вовняний шарф",
-      price: "1 200 грн", image: "", desc_ru: "Мягкий шерстяной шарф", desc_en: "Soft wool scarf", desc_de: "Weicher Wollschal", desc_uk: "М'який вовняний шарф" },
-    { category_id: "cat2",
-      name_ru: "Перчатки кожаные", name_en: "Leather Gloves", name_de: "Lederhandschuhe", name_uk: "Шкіряні рукавички",
-      price: "1 500 грн", image: "", desc_ru: "", desc_en: "", desc_de: "", desc_uk: "" },
-  ]
-};
 
 // ─── STATE ───────────────────────────────────────────────────────
 let currentLang = CONFIG.DEFAULT_LANG;
 let catalog = { settings: {}, categories: [] };
 
 // ─── HELPERS ─────────────────────────────────────────────────────
-const t = (obj, key) => obj[`${key}_${currentLang}`] || obj[`${key}_en`] || obj[`${key}_ru`] || "";
-const setting = (key) => catalog.settings[key] ? (catalog.settings[key][currentLang] || catalog.settings[key]["en"] || "") : "";
+const setting = (key) => {
+  if (!catalog.settings[key]) return "";
+  return catalog.settings[key][currentLang] || catalog.settings[key]["en"] || "";
+};
 const apiUrl = (sheet) =>
   `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}`;
 
-// ─── FETCH FROM GOOGLE SHEETS ────────────────────────────────────
-// Для Settings (заголовки в данных)
+// ─── FETCH FUNCTIONS ──────────────────────────────────────────────
 async function fetchSheetManualHeaders(sheetName) {
   const res = await fetch(apiUrl(sheetName));
   const text = await res.text();
@@ -417,7 +397,6 @@ async function fetchSheetManualHeaders(sheetName) {
   });
 }
 
-// Для Products (заголовки в label)
 async function fetchSheet(sheetName) {
   const res = await fetch(apiUrl(sheetName));
   const text = await res.text();
@@ -432,87 +411,100 @@ async function fetchSheet(sheetName) {
 
 // ─── PARSE DATA ───────────────────────────────────────────────────
 function parseData(settingsRows, productRows) {
-  // Settings → dict
   const settings = {};
   settingsRows.forEach(row => { if (row.key) settings[row.key] = row; });
 
-  // Products → group by category
   const catMap = new Map();
   productRows.forEach(row => {
     const cid = row.category_id;
+    if (!cid) return;
     if (!catMap.has(cid)) {
+      // Собираем названия категории для всех языков динамически
+      const name = {}, desc = {};
+      Object.keys(CONFIG.LANGUAGES).forEach(lang => {
+        name[lang] = row[`category_name_${lang}`] || "";
+        desc[lang] = row[`category_desc_${lang}`] || "";
+      });
       catMap.set(cid, {
         id: cid,
-        name: { ru: row.category_name_ru, en: row.category_name_en, de: row.category_name_de, uk: row.category_name_uk },
-        image: row.category_image,
-        desc: { ru: row.category_desc_ru, en: row.category_desc_en, de: row.category_desc_de, uk: row.category_desc_uk },
+        name,
+        image: row.category_image || "",
+        desc,
         products: []
       });
     }
+    // Собираем названия товара для всех языков динамически
+    const pName = {}, pDesc = {};
+    Object.keys(CONFIG.LANGUAGES).forEach(lang => {
+      pName[lang] = row[`name_${lang}`] || "";
+      pDesc[lang] = row[`desc_${lang}`] || "";
+    });
     catMap.get(cid).products.push({
-      name: { ru: row.name_ru, en: row.name_en, de: row.name_de, uk: row.name_uk },
-      price: row.price,
-      image: row.image,
-      desc: { ru: row.desc_ru, en: row.desc_en, de: row.desc_de, uk: row.desc_uk },
+      name: pName,
+      price: row.price || "",
+      image: row.image || "",
+      desc: pDesc,
     });
   });
 
   return { settings, categories: [...catMap.values()] };
 }
 
-// ─── PARSE DEMO DATA ──────────────────────────────────────────────
-function parseDemoData() {
-  const settings = {};
-  DEMO_DATA.settings.forEach(row => { settings[row.key] = row; });
+// ─── LANGUAGE DROPDOWN ────────────────────────────────────────────
+function buildLangDropdown() {
+  const dropdown = document.getElementById("lang-dropdown");
+  dropdown.innerHTML = Object.entries(CONFIG.LANGUAGES).map(([code, info]) =>
+    `<div class="lang-option${code === currentLang ? " active" : ""}" onclick="switchLang('${code}')">
+      <span class="flag">${info.flag}</span>
+      <span>${info.label}</span>
+      <span class="code">${code.toUpperCase()}</span>
+    </div>`
+  ).join("");
+}
 
-  const catMap = new Map();
-  DEMO_DATA.products.forEach(row => {
-    const cid = row.category_id;
-    if (!catMap.has(cid)) {
-      catMap.set(cid, {
-        id: cid,
-        name: { ru: row.category_name_ru, en: row.category_name_en, de: row.category_name_de, uk: row.category_name_uk },
-        image: row.category_image,
-        desc: { ru: row.category_desc_ru, en: row.category_desc_en, de: row.category_desc_de, uk: row.category_desc_uk },
-        products: []
-      });
-    }
-    catMap.get(cid).products.push({
-      name: { ru: row.name_ru, en: row.name_en, de: row.name_de, uk: row.name_uk },
-      price: row.price,
-      image: row.image,
-      desc: { ru: row.desc_ru, en: row.desc_en, de: row.desc_de, uk: row.desc_uk },
-    });
-  });
+function toggleLangDropdown() {
+  document.getElementById("lang-wrapper").classList.toggle("open");
+}
 
-  return { settings, categories: [...catMap.values()] };
+// Закрыть dropdown при клике вне
+document.addEventListener("click", (e) => {
+  const wrapper = document.getElementById("lang-wrapper");
+  if (wrapper && !wrapper.contains(e.target)) {
+    wrapper.classList.remove("open");
+  }
+});
+
+function updateLangButton() {
+  const info = CONFIG.LANGUAGES[currentLang];
+  document.getElementById("lang-flag").textContent = info.flag;
+  document.getElementById("lang-label").textContent = info.label;
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────
+function getLangVal(obj, key) {
+  return obj[key + "_" + currentLang] || obj[key + "_en"] || "";
+}
+
 function render() {
   const siteName = setting("site_name") || "Reforma";
   document.title = siteName;
   document.getElementById("nav-title").textContent = siteName;
   document.getElementById("footer-brand").textContent = siteName;
 
-  // Lang switcher
-  const ls = document.getElementById("lang-switcher");
-  ls.innerHTML = CONFIG.LANGUAGES.map(l =>
-    `<button class="lang-btn${l === currentLang ? " active" : ""}" onclick="switchLang('${l}')">${CONFIG.LANG_LABELS[l] || l.toUpperCase()}</button>`
-  ).join("");
+  updateLangButton();
+  buildLangDropdown();
 
-  // Hero
   const bannerTitle = setting("banner_1_title");
-  const bannerDesc = setting("banner_1_desc");
-  const bannerImg = setting("banner_1_image");
-  const bannerTag = setting("banner_1_tag");
+  const bannerDesc  = setting("banner_1_desc");
+  const bannerImg   = setting("banner_1_image");
+  const bannerTag   = setting("banner_1_tag");
 
-  // Category nav
   const catNavHtml = catalog.categories.map(cat =>
-    `<button class="cat-nav-btn" onclick="document.getElementById('cat-${cat.id}').scrollIntoView({behavior:'smooth'})">${cat.name[currentLang] || cat.name.en}</button>`
+    `<button class="cat-nav-btn" onclick="document.getElementById('cat-${cat.id}').scrollIntoView({behavior:'smooth'})">
+      ${cat.name[currentLang] || cat.name.en || ""}
+    </button>`
   ).join("");
 
-  // Sections
   const sectionsHtml = catalog.categories.map((cat, idx) => {
     const isReverse = idx % 2 === 1;
     const catName = cat.name[currentLang] || cat.name.en || "";
@@ -523,7 +515,7 @@ function render() {
         <div class="section-img-wrap">
           ${cat.image
             ? `<img class="section-img" src="${cat.image}" alt="${catName}" loading="lazy" />`
-            : `<div class="section-img-placeholder">📦</div>`}
+            : `<div class="product-img-placeholder">📦</div>`}
         </div>
         <div class="section-text">
           <div class="section-number">0${idx + 1}</div>
@@ -546,7 +538,6 @@ function render() {
           <div class="product-name">${name}</div>
           ${desc ? `<div class="product-desc">${desc}</div>` : ""}
           ${p.price ? `<div class="product-price">${p.price}</div>` : ""}
-
         </div>
       </div>`;
     }).join("");
@@ -572,22 +563,54 @@ function render() {
   `;
 }
 
+// ─── PRODUCT WORD ─────────────────────────────────────────────────
 function productWord(n) {
-  // Multilingual item count word
-  const words = { ru: ["товар","товара","товаров"], en: ["item","items","items"], de: ["Artikel","Artikel","Artikel"], uk: ["товар","товари","товарів"] };
+  const words = {
+    en: ["item","items"],
+    pl: ["produkt","produkty","produktów"],
+    uk: ["товар","товари","товарів"],
+    fr: ["article","articles"],
+    nl: ["artikel","artikelen"],
+    de: ["Artikel","Artikel"],
+    it: ["articolo","articoli"],
+    es: ["artículo","artículos"],
+    pt: ["artigo","artigos"],
+    el: ["είδος","είδη"],
+    cs: ["položka","položky","položek"],
+    sk: ["položka","položky","položiek"],
+    hu: ["termék","termék"],
+    ro: ["produs","produse"],
+    bg: ["артикул","артикула","артикула"],
+    hr: ["artikl","artikla","artikala"],
+    sr: ["artikal","artikla","artikala"],
+    sl: ["artikel","artikli"],
+    da: ["vare","varer"],
+    no: ["vare","varer"],
+    sv: ["artikel","artiklar"],
+    fi: ["tuote","tuotetta"],
+    ru: ["товар","товара","товаров"],
+  };
   const w = words[currentLang] || words.en;
-  const mod10 = n % 10, mod100 = n % 100;
-  if (currentLang === "ru" || currentLang === "uk") {
-    if (mod100 >= 11 && mod100 <= 14) return w[2];
-    if (mod10 === 1) return w[0];
-    if (mod10 >= 2 && mod10 <= 4) return w[1];
+  // Slavic plural rules (ru, uk, pl, cs, sk, bg, hr, sr)
+  if (["ru","uk","bg"].includes(currentLang) && w.length === 3) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m100 >= 11 && m100 <= 14) return w[2];
+    if (m10 === 1) return w[0];
+    if (m10 >= 2 && m10 <= 4) return w[1];
     return w[2];
   }
-  return n === 1 ? w[0] : w[1];
+  if (["pl","cs","sk","hr","sr"].includes(currentLang) && w.length === 3) {
+    if (n === 1) return w[0];
+    if (n >= 2 && n <= 4) return w[1];
+    return w[2];
+  }
+  return n === 1 ? w[0] : w[1] || w[0];
 }
 
+// ─── SWITCH LANG ──────────────────────────────────────────────────
 function switchLang(lang) {
   currentLang = lang;
+  document.getElementById("lang-wrapper").classList.remove("open");
   render();
 }
 
@@ -596,17 +619,18 @@ async function init() {
   const isDemo = CONFIG.SHEET_ID === "ВСТАВЬТЕ_ID_ТАБЛИЦЫ_СЮДА" || !CONFIG.SHEET_ID;
 
   if (isDemo) {
-    catalog = parseDemoData();
+    // demo fallback
+    catalog = { settings: {}, categories: [] };
   } else {
     try {
       const [settingsRows, productRows] = await Promise.all([
-      fetchSheetManualHeaders(CONFIG.SHEETS.settings),
-      fetchSheet(CONFIG.SHEETS.products),
+        fetchSheetManualHeaders(CONFIG.SHEETS.settings),
+        fetchSheet(CONFIG.SHEETS.products),
       ]);
       catalog = parseData(settingsRows, productRows);
     } catch (e) {
-      catalog = parseDemoData();
-      console.warn("Ошибка загрузки Google Sheets, используются демо-данные:", e);
+      console.warn("Ошибка загрузки Google Sheets:", e);
+      catalog = { settings: {}, categories: [] };
     }
   }
 
